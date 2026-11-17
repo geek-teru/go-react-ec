@@ -1,0 +1,23 @@
+# env
+.env
+.env.*
+!.env.example
+
+# Go
+api/bin/
+api/tmp/
+*.test
+coverage.out
+
+# Node / React Router / Cloudflare
+node_modules/
+web/build/
+web/.react-router/
+.wrangler/
+.dev.vars
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
