@@ -18,7 +18,13 @@ web-dev: ## UI を起動（後続タスクで実装）
 	@echo "TODO: cd web && npm run dev"
 
 migrate-up: ## マイグレーションを適用
-	goose -dir $(MIGRATIONS_DIR) postgres "$(DATABASE_URL)" up
+	cd api && go run ./cmd/migrate up
+
+migrate-down: ## 1つ戻す
+	cd api && go run ./cmd/migrate down
+
+migrate-status: ## 適用状況を見る
+	cd api && go run ./cmd/migrate status
 
 test: ## ユニットテスト（後続タスクで実装）
 	@echo "TODO: cd api && go test ./... && cd ../web && npm test"
