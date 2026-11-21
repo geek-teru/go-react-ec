@@ -21,8 +21,16 @@ go get github.com/labstack/echo/v4                 # 依存を追加する（go.
 
 Go のホットリロードツール。`.go` ファイルを保存すると、自動でビルドしてサーバーを再起動する。
 
-- 設定は `api/.air.toml`（見張る拡張子、ビルドのコマンド、起動するバイナリ）
-- 起動は `go tool air`（`make api-dev`）
+```bash
+cd api && go get -tool github.com/air-verse/air@latest   # go.mod の tool に入る（最初の1回だけ）
+make api-dev                                              # = cd api && go tool air
+```
+
+- 設定は `api/.air.toml`。`./cmd/server` を `api/tmp/server` にビルドして起動する。`tmp/` と `db/migrations` は見張らない
+- 保存すると `xxx.go has changed` → `building...` → `running...` とログが出る。ビルドに失敗したら前のサーバーは止まる（`stop_on_error`）
+- WSL から `/mnt/c` のファイルを見ると、Windows 側（VS Code など）の編集が inotify で届かない。そのため `poll = true` でポーリングにしている
+- 再起動のときは SIGINT を送る（`send_interrupt`）ので、`main.go` の graceful shutdown が効く
+- `api/tmp/` は `.gitignore` 済み。終了時に消える（`clean_on_exit`）
 - 開発中のローカル専用。本番のコンテナには入れない
 
 ## go get の `-tool` あり・なし

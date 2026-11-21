@@ -11,8 +11,8 @@ up: ## Postgres と stripe-mock を起動
 down: ## 停止（データは残す。消すなら docker compose down -v）
 	docker compose down
 
-api-dev: ## API を起動（後続タスクで実装）
-	@echo "TODO: cd api && go run ./cmd/server"
+api-dev: ## API をホットリロードで起動（air）
+	cd api && go tool air
 
 web-dev: ## UI を起動（後続タスクで実装）
 	@echo "TODO: cd web && npm run dev"
