@@ -4,6 +4,7 @@
 - [air とは](#air-とは)
 - [go get の `-tool` あり・なし](#go-get-の--tool-ありなし)
 - [slog とは](#slog-とは)
+- [goose とは](#goose-とは)
 
 ## go mod init と依存の追加
 
@@ -51,3 +52,28 @@ logger.Info("request", slog.String("method", "GET"), slog.Int("status", 200))
 - 出力の形は Handler で決まる（`NewJSONHandler` / `NewTextHandler`）。zap などを Handler として差し替えても、呼び出す側は変わらない
 - このリポジトリでは `cmd/server` で JSON のロガーを作り、`httpserver.New(logger)` に渡してアクセスログとエラーログに使う
 - `logger.Info("msg", "key")` のように値の無いキーを渡すと `!BADKEY` になる。`slog.String` などの型付きの関数を使うと防げる
+
+## goose とは
+
+Go 製の DB マイグレーションツール。SQL ファイルに Up と Down を書き、番号順に適用する。CLI とライブラリの両方がある。
+
+```sql
+-- api/db/migrations/00001_create_users.sql
+-- +goose Up
+CREATE TABLE users (id BIGSERIAL PRIMARY KEY, email TEXT NOT NULL UNIQUE);
+
+-- +goose Down
+DROP TABLE IF EXISTS users;
+```
+
+| やること | コマンド |
+| --- | --- |
+| 雛形を作る | `goose -dir api/db/migrations -s create <名前> sql`（`-s` で連番） |
+| 適用する | `make migrate-up`（`go run ./cmd/migrate up`） |
+| 1つ戻す | `make migrate-down` |
+| 状態を見る | `make migrate-status` |
+
+- このリポジトリでは、SQL を `embed` で埋め込み、`cmd/migrate` から `goose.SetBaseFS` → `goose.SetDialect("postgres")` → `goose.Up(db, ".")` で流す。接続は API と同じ `db.ConnectDB()`
+- 適用済みの番号は `goose_db_version` テーブルに記録される。適用済みのファイルを直しても再適用されないので、変更は新しいファイルで足す
+- 関数・トリガーなど `;` を含む文は `-- +goose StatementBegin` / `-- +goose StatementEnd` で囲む
+- GORM の AutoMigrate は使わない（履歴・Down が無く、列の削除や改名ができないため）

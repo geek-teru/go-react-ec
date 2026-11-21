@@ -10,8 +10,12 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
+// errorBody(Json形式)
 type errorBody struct {
-	Error struct{ Code, Message string } `json:"error"`
+	Error struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 func New(logger *slog.Logger) *echo.Echo {
