@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type DbConfig struct {
+type Config struct {
 	User     string `env:"DB_USER" envDefault:"local"`
 	Password string `env:"DB_PASSWORD" envDefault:"local"`
 	Addr     string `env:"DB_ADDR" envDefault:"127.0.0.1"`
@@ -22,7 +22,7 @@ type DbConfig struct {
 
 // 標準の database/sql の接続を返す（goose のマイグレーションでも使える）
 func ConnectDB() (*sql.DB, error) {
-	c, err := env.ParseAs[DbConfig]()
+	c, err := env.ParseAs[Config]()
 	if err != nil {
 		return nil, err
 	}
