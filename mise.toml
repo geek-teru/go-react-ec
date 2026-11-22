@@ -2,7 +2,7 @@
 go = "1.27.4"                    # mise latest go
 node = "24.11.0"                 # LTS。mise ls-remote node で確認
 "aqua:pressly/goose" = "3.26.0"  # マイグレーション
-golangci-lint = "2.6.0"
+golangci-lint = "2.15.0"
 
 [env]
 _.file = ".env"                  # .env を自動で読み込む

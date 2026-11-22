@@ -4,18 +4,38 @@
 
 ## 技術スタック
 
-| 区分             | 採用                                                                    |
-| ---------------- | ----------------------------------------------------------------------- |
-| API              | Go 1.27 / Echo / GORM                                                   |
-| マイグレーション | goose（SQL ファイル）                                                   |
-| UI               | React Router v7（framework mode）/ TypeScript / Tailwind CSS            |
-| DB               | PostgreSQL（本番: Neon、ローカル・テスト: postgres:17）                 |
-| 決済             | Stripe テストモード（ローカル・E2E: stripe-mock）                       |
-| 認証             | メール + パスワード（bcrypt）、DB に保存する Cookie セッション          |
-| 実行基盤         | UI: Cloudflare Workers（SSR）、API: Cloudflare Containers               |
-| テスト           | Go: testing + testify / testcontainers-go、UI: Vitest + Testing Library |
-| CI               | GitHub Actions                                                          |
-| 開発ツール       | mise / Docker Compose / golangci-lint                                   |
+### バックエンド（api/）
+
+| 区分                 | 採用                                                                  |
+| -------------------- | --------------------------------------------------------------------- |
+| 言語・フレームワーク | Go 1.27 / Echo / GORM                                                 |
+| マイグレーション     | goose（SQL ファイル）                                                 |
+| 認証                 | メール + パスワード（bcrypt）、DB に保存する Cookie セッション        |
+| 決済                 | Stripe テストモード（ローカル・E2E: stripe-mock）                     |
+| テスト               | testing + testify / testcontainers-go                                 |
+| Lint・整形           | golangci-lint（標準 + errorlint / gosec / revive、gofmt / goimports） |
+
+### フロントエンド（web/）
+
+| 区分           | 採用                                                         |
+| -------------- | ------------------------------------------------------------ |
+| フレームワーク | React Router v7（framework mode）/ TypeScript / Tailwind CSS |
+| テスト         | Vitest + Testing Library                                     |
+
+### インフラ
+
+| 区分     | 採用                                                      |
+| -------- | --------------------------------------------------------- |
+| DB       | PostgreSQL（本番: Neon、ローカル・テスト: postgres:17）   |
+| 実行基盤 | UI: Cloudflare Workers（SSR）、API: Cloudflare Containers |
+| CI       | GitHub Actions                                            |
+
+### 開発ツール
+
+| 区分           | 採用                                      |
+| -------------- | ----------------------------------------- |
+| バージョン管理 | mise（Go / Node / goose / golangci-lint） |
+| ローカル環境   | Docker Compose（db / stripe-mock）        |
 
 UI の Worker が API の Container を呼び、`/api/*` を中継する BFF 構成です。ブラウザは Worker とだけ通信するので、CORS の設定は要りません。
 
@@ -54,3 +74,4 @@ make web-dev            # 別ターミナル
 | `make api-dev` / `make web-dev` | API / UI の開発サーバー       |
 | `make migrate-up`               | マイグレーションの適用        |
 | `make test` / `make e2e`        | テスト / API の E2E           |
+| `make lint` / `make fmt`        | 静的解析 / 整形               |

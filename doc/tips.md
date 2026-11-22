@@ -5,6 +5,8 @@
 - [go get の `-tool` あり・なし](#go-get-の--tool-ありなし)
 - [slog とは](#slog-とは)
 - [goose とは](#goose-とは)
+- [golangci-lint とは](#golangci-lint-とは)
+- [golangci-lint で使う linter・formatter](#golangci-lint-で使う-linterformatter)
 
 ## go mod init と依存の追加
 
@@ -85,3 +87,36 @@ DROP TABLE IF EXISTS users;
 - 適用済みの番号は `goose_db_version` テーブルに記録される。適用済みのファイルを直しても再適用されないので、変更は新しいファイルで足す
 - 関数・トリガーなど `;` を含む文は `-- +goose StatementBegin` / `-- +goose StatementEnd` で囲む
 - GORM の AutoMigrate は使わない（履歴・Down が無く、列の削除や改名ができないため）
+
+## golangci-lint とは
+
+Go の linter と formatter をまとめて実行するツール。100 を超える linter を内蔵し、使うものを `api/.golangci.yml` で選ぶ。
+
+```bash
+make lint   # = cd api && golangci-lint run ./...   検査
+make fmt    # = cd api && golangci-lint fmt ./...   整形（gofmt + goimports）
+```
+
+- バージョンは `mise.toml` で固定（2.6.0）。v2 は設定ファイルに `version: "2"` が要り、v1 の書き方は読めない（`golangci-lint migrate` で変換できる）
+- 設定ファイルは実行したディレクトリから上へ探す。`api/` で実行するので `api/.golangci.yml` が読まれる。無くても標準のセットで動くが、formatter は使われない
+- 手元でも CI でも同じ設定ファイルを読むので、誰がどこで実行しても同じルールで検査できる
+- golangci-lint をビルドした Go より新しい Go を go.mod で指定すると `the Go language version ... is lower than the targeted Go version` で止まる。golangci-lint の版を上げる
+- `exclusions.presets` で、よくある誤検知（`defer f.Close()` の戻り値など）や、公開関数のコメントの書式の指摘をまとめて外せる
+
+## golangci-lint で使う linter・formatter
+
+| 名前 | 種類 | 見るもの・整えるもの |
+| --- | --- | --- |
+| errcheck | 標準 | 返ってきたエラーを確かめずに捨てていないか |
+| govet | 標準 | 書式の指定ミス、構造体のコピーなど（`go vet` と同じ） |
+| ineffassign | 標準 | 代入した値を使わずに上書きしていないか |
+| staticcheck | 標準 | 非推奨の API、意味の無いコード、よくある書き間違い（stylecheck・gosimple を含む） |
+| unused | 標準 | 使っていない関数・変数・型・定数 |
+| errorlint | 追加 | エラーを `==` や型アサーションで比べていないか（`errors.Is` / `errors.As` を使う） |
+| gosec | 追加 | SQL の文字列連結、弱い乱数、タイムアウトの無い HTTP サーバーなど。`_test.go` では外す |
+| revive | 追加 | 命名（`DbConfig` → `DBConfig`）、使っていない引数など、スタイル全般 |
+| gofmt | formatter | インデント・空白・フィールドの揃えを標準の書式にする |
+| goimports | formatter | import の追加・削除と並び替え。標準 → 外部 → このリポジトリ（`local-prefixes`）の順に分ける |
+
+- 「標準」は `linters.default: standard` で動くもの。「追加」は `linters.enable` で足したもの
+- 使っていない引数は `_` にすると revive の指摘が消える（例: `func(_ echo.Context, v ...)`）

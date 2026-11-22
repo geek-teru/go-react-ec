@@ -4,8 +4,8 @@ import "github.com/caarlos0/env/v11"
 
 type Config struct {
 	// 共通
-	ServiceEnv  string `env:"SERVICE_ENV" envDefault:"local"`
-	Port        string `env:"API_PORT" envDefault:"8080"`
+	ServiceEnv string `env:"SERVICE_ENV" envDefault:"local"`
+	Port       string `env:"API_PORT" envDefault:"8080"`
 
 	// Stripe 関連
 	// StripeSecretKey     string `env:"STRIPE_SECRET_KEY,required"`

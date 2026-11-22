@@ -35,7 +35,7 @@ func main() {
 	case "status":
 		err = goose.Status(sqlDB, ".")
 	default:
-		log.Fatalf("unknown command: %s (up | down | status)", cmd)
+		log.Fatalf("unknown command: %q (up | down | status)", cmd) //nolint:gosec // 開発者が実行する CLI の引数。%q で改行もエスケープ済み
 	}
 	if err != nil {
 		log.Fatal(err)

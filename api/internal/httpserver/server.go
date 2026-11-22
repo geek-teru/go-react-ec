@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -35,7 +34,7 @@ func New(logger *slog.Logger) *echo.Echo {
 		LogError:     true,
 		HandleError:  true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			logger.LogAttrs(context.Background(), slog.LevelInfo, "request",
+			logger.LogAttrs(c.Request().Context(), slog.LevelInfo, "request",
 				slog.String("method", v.Method), slog.String("uri", v.URI),
 				slog.Int("status", v.Status), slog.Duration("latency", v.Latency),
 				slog.String("request_id", v.RequestID))

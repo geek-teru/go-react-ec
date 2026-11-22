@@ -3,7 +3,7 @@ export
 
 MIGRATIONS_DIR := api/db/migrations
 
-.PHONY: up down api-dev web-dev migrate-up test e2e
+.PHONY: up down api-dev web-dev migrate-up migrate-down migrate-status test e2e lint fmt
 
 up: ## Postgres と stripe-mock を起動
 	docker compose up -d --wait
@@ -25,6 +25,12 @@ migrate-down: ## 1つ戻す
 
 migrate-status: ## 適用状況を見る
 	cd api && go run ./cmd/migrate status
+
+lint: ## 静的解析（golangci-lint）
+	cd api && golangci-lint run ./...
+
+fmt: ## 整形（gofmt + goimports）
+	cd api && golangci-lint fmt ./...
 
 test: ## ユニットテスト（後続タスクで実装）
 	@echo "TODO: cd api && go test ./... && cd ../web && npm test"
