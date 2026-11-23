@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/geek-teru/go-react-ec/api/internal/handler"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -17,7 +18,7 @@ type errorBody struct {
 	} `json:"error"`
 }
 
-func New(logger *slog.Logger) *echo.Echo {
+func New(logger *slog.Logger, db handler.Pinger) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 
@@ -44,9 +45,13 @@ func New(logger *slog.Logger) *echo.Echo {
 	e.Use(middleware.Recover())
 
 	api := e.Group("/api")
-	api.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
-	})
+
+	healthHandler := handler.NewHealthHandler(db, logger)
+
+	// healthcheck
+	api.GET("/health", healthHandler.Health)
+	api.GET("/health/db", healthHandler.DB)
+
 	return e
 }
 
