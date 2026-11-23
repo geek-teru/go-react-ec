@@ -30,11 +30,19 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.ConnectGORM(); err != nil {
-		return err
-	} // 後続で各機能に渡す
 
-	e := httpserver.New(logger)
+	gormDB, err := db.ConnectGORM() // 後続で各機能に渡す
+	if err != nil {
+		return err
+	}
+
+	sqlDB, err := gormDB.DB() // GORM の下の *sql.DB。PingContext を持つ
+	if err != nil {
+		return err
+	}
+	defer sqlDB.Close()
+
+	e := httpserver.New(logger, sqlDB)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
