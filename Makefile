@@ -35,5 +35,5 @@ fmt: ## 整形（gofmt + goimports）
 test: ## ユニットテスト（後続タスクで実装）
 	@echo "TODO: cd api && go test ./... && cd ../web && npm test"
 
-e2e: ## API の E2E（後続タスクで実装）
-	@echo "TODO: cd api && go test ./e2e/..."
+e2e: ## API の E2E（Docker が必要。testcontainers がコンテナを起動する）
+	cd api && go test -tags=e2e -count=1 ./e2e/...
