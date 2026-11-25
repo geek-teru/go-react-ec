@@ -7,6 +7,9 @@
 - [goose とは](#goose-とは)
 - [golangci-lint とは](#golangci-lint-とは)
 - [golangci-lint で使う linter・formatter](#golangci-lint-で使う-linterformatter)
+- [Go のテストの作法](#go-のテストの作法)
+- [Factory パターンとテストデータのファクトリ](#factory-パターンとテストデータのファクトリ)
+- [E2E の3点セット（TestMain・helper・factory）](#e2e-の3点セットtestmainhelperfactory)
 
 ## go mod init と依存の追加
 
@@ -120,3 +123,92 @@ make fmt    # = cd api && golangci-lint fmt ./...   整形（gofmt + goimports�
 
 - 「標準」は `linters.default: standard` で動くもの。「追加」は `linters.enable` で足したもの
 - 使っていない引数は `_` にすると revive の指摘が消える（例: `func(_ echo.Context, v ...)`）
+
+## Go のテストの作法
+
+単体テストも E2E も、標準の `go test` で動かす。
+
+```bash
+cd api
+go test ./...                          # 単体テスト（e2e タグのファイルは無視される）
+go test -tags=e2e -count=1 ./e2e/...   # E2E（= make e2e。Docker が必要）
+go test -run TestHealthDB ./...        # 名前で絞って実行する
+```
+
+| 作法 | 意味 |
+| --- | --- |
+| ファイル名を `_test.go` で終える | `go test` がテストとして拾う。`go build` には含まれない |
+| 関数を `func TestXxx(t *testing.T)` にする | `Test` で始まる関数がテストになる |
+| 先頭に `//go:build e2e` を書く | `-tags=e2e` を付けたときだけコンパイルされる。付けないと、そのファイルは無いものとして扱われる |
+| `func TestMain(m *testing.M)` を書く | パッケージ内のテストの前後に1回だけ処理を挟む。`m.Run()` で各テストを実行する |
+
+よく使うオプション:
+
+| オプション | 意味 | 例 |
+| --- | --- | --- |
+| `./...` | 今のディレクトリ以下の全パッケージ（オプションではなくパッケージの指定） | `go test ./...` |
+| `-v` | テストごとに `=== RUN` / `--- PASS` を出す。`t.Log` の出力も成功時に出る | `go test -v ./e2e/...` |
+| `-run <正規表現>` | 名前が一致するテストだけ実行する。サブテストは `/` で区切る | `-run TestHealthDB`、`-run 'TestUser/invalid'` |
+| `-count=1` | キャッシュを使わず毎回実行する。`-count=10` なら10回くり返す（不安定なテストを探す） | `go test -count=1 ./...` |
+| `-tags=<タグ>` | `//go:build <タグ>` のファイルを含める | `-tags=e2e` |
+| `-race` | データ競合（goroutine 間の同時アクセス）を検出する。遅くなる | `go test -race ./...` |
+| `-cover` / `-coverprofile=<file>` | カバレッジを出す。`go tool cover -html=coverage.out` でブラウザで見られる | `-coverprofile=coverage.out` |
+| `-timeout <時間>` | 全体の制限時間（既定 10 分）。超えると panic して、止まっている goroutine を出す | `-timeout 2m` |
+| `-failfast` | 最初の失敗で残りのテストを止める | `go test -failfast ./...` |
+| `-short` | `testing.Short()` が true になる。遅いテストを `t.Skip` で飛ばす目印に使う | `go test -short ./...` |
+| `-p` / `-parallel` | `-p` は同時に動かすパッケージ数、`-parallel` は `t.Parallel()` のテストの同時数 | `-p 1` |
+
+- `-count=1` のようなテスト用のオプションは、パッケージの指定の前でも後ろでもよい
+- 結果の `(cached)` は前回の結果の再表示。コードもファイルも環境変数も変わっていないと出る
+- E2E のパッケージが複数になったら、パッケージを並列に動かすと DB を取り合うので、`-p 1` を検討する（今は `api/e2e` 1つで、コンテナもパッケージごとに起動するので不要）
+
+- E2E を build tag で分けるのは、Docker が要る遅いテストを普段の `go test ./...` から外すため
+- `//go:build e2e` はファイルの1行目に書き、`package` との間に空行を入れる。空行が無いとただのコメントになる
+- `TestMain` の中で `log.Fatal` や `os.Exit` を呼ぶと defer が走らない。後始末が要るなら本体を `run(m) int` に分けて `os.Exit(run(m))` にする
+- テスト結果はキャッシュされ、`(cached)` と出て実行されないことがある。外部の DB やコンテナに依存する E2E は `-count=1` で毎回実行する
+- タグ付きのファイルは、タグを渡さないと golangci-lint や VS Code（gopls）からも見えない。`.golangci.yml` の `run.build-tags`、gopls の `buildFlags: ["-tags=e2e"]` で渡す
+- このリポジトリでは、E2E は `api/e2e/` に置き、`TestMain` で testcontainers の Postgres 起動 → goose up → `httptest.NewServer(httpserver.New(...))` をしてから各テストを実行する
+
+## Factory パターンとテストデータのファクトリ
+
+Factory パターンは、オブジェクトを作る処理を1か所にまとめる設計パターン。Go では `NewXxx` の関数がこれに当たる（例: `handler.NewHealthHandler`、`httpserver.New`）。
+
+このリポジトリでは、同じ考えを E2E のテストデータ作りに使う（`api/e2e/helper/factory.go`）。INSERT をテストごとに書かず、ファクトリの関数で1行で作る。
+
+```go
+userID := helper.CreateUser(t, db)                                     // 全部おまかせ
+userID := helper.CreateUser(t, db, helper.WithEmail("a@example.test")) // テストで気にする値だけ指定
+```
+
+- 指定した値だけがそのテストで大事な値だと読める。テーブルに列が増えても、直すのはファクトリだけで済む
+- メールアドレスなど一意の制約がある値は、ファクトリが毎回違う値を作る
+- `WithEmail` のように必要な項目だけ上書きする書き方を functional options と呼ぶ
+- `//go:build e2e` が付くので、本番のコードからは使えない。テストデータ専用
+- 関数はテーブルを作るタスクで足す（`users` の最初の `CreateUser` など）
+
+## E2E の3点セット（TestMain・helper・factory）
+
+API の E2E は、`api/e2e/` の3つで組み立てる。
+
+| ファイル | 役割 | 動くタイミング | 一般的な呼び方 |
+| --- | --- | --- | --- |
+| `main_test.go`（`TestMain`） | 環境を用意して片付ける（Postgres のコンテナ、goose up、httptest のサーバー） | パッケージで1回 | スイートのセットアップ / ティアダウン、共有フィクスチャ |
+| `helper/helper.go`（`Setup`） | テストごとの下準備（TRUNCATE、httpexpect の生成） | テストごと | テストごとのセットアップ（xUnit の setUp / JUnit の `@BeforeEach` にあたる） |
+| `helper/factory.go`（`CreateXxx`） | そのテストに要るデータを入れる | テストの中で必要なだけ | テストデータのファクトリ（Test Data Builder、Object Mother） |
+
+各テストは AAA（Arrange-Act-Assert）の順に書く。
+
+```go
+func TestXxx(t *testing.T) {
+	e := helper.Setup(t, sqlDB, baseURL) // Arrange: 空の DB と httpexpect
+	userID := helper.CreateUser(t, sqlDB) // Arrange: 要るデータだけ入れる
+
+	e.GET("/api/users/{id}", userID). // Act: リクエストを送る
+		Expect().Status(http.StatusOK)  // Assert: 結果を確かめる
+}
+```
+
+- 3つをまとめた決まった名前は無い。用意する環境・状態全体を「テストフィクスチャ（test fixture）」、テストを動かすための仕組み全体を「テストハーネス（test harness）」と呼ぶことが多い
+- 重い準備（コンテナの起動）は `TestMain` で1回、軽い準備（TRUNCATE）はテストごと、と分けることで、速さとテスト間の独立を両立する
+- データが要らないテスト（ヘルスチェック）はファクトリを使わない。テーブルができると3つそろって使う
+- 呼び方の出典: setup / teardown とフィクスチャは xUnit の用語、Test Data Builder・Object Mother はテストデータ作りのパターン名

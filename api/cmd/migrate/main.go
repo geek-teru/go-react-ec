@@ -29,9 +29,11 @@ func main() {
 
 	switch cmd {
 	case "up":
+		// マイグレート
 		err = goose.Up(sqlDB, ".")
 	case "down":
-		err = goose.Down(sqlDB, ".") // 1つだけ戻す
+		// 1つだけ戻す
+		err = goose.Down(sqlDB, ".")
 	case "status":
 		err = goose.Status(sqlDB, ".")
 	default:
