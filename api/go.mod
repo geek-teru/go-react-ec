@@ -4,9 +4,12 @@ go 1.27.4
 
 require (
 	github.com/caarlos0/env/v11 v11.4.2
+	github.com/gavv/httpexpect/v2 v2.17.0
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/labstack/echo/v4 v4.16.5
 	github.com/pressly/goose/v3 v3.30.1
+	github.com/testcontainers/testcontainers-go v0.45.0
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.45.0
 	gorm.io/driver/postgres v1.6.3
 	gorm.io/gorm v1.31.2
 )
@@ -37,7 +40,6 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/gavv/httpexpect/v2 v2.17.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -47,6 +49,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -85,8 +88,6 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/tdewolff/parse/v2 v2.8.12 // indirect
-	github.com/testcontainers/testcontainers-go v0.45.0 // indirect
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.45.0 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -114,6 +115,8 @@ require (
 	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
+	gopkg.in/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )
 
