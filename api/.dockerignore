@@ -1,0 +1,14 @@
+# ビルドに要らないもの
+Dockerfile
+.dockerignore
+tmp/
+bin/
+e2e/
+*.test
+coverage.out
+.air.toml
+.golangci.yml
+
+# シークレット
+.env
+.env.*
