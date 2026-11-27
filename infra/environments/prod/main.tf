@@ -1,5 +1,5 @@
 # ----------------------------------------
-# Modules
+# Network
 # ----------------------------------------
 module "network" {
   source = "../../modules/network"
@@ -25,4 +25,14 @@ module "network" {
   }
 
   nat_gateway_subnet_key = "1a"
+}
+
+# ----------------------------------------
+# ECS
+# ----------------------------------------
+module "ecs" {
+  source = "../../modules/ecs"
+
+  env          = var.env
+  service_name = var.service_name
 }
