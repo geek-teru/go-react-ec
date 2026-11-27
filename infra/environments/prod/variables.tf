@@ -5,7 +5,12 @@ variable "env" {
 
 variable "service_name" {
   type    = string
-  default = "go-react-ec"
+  default = "sample-ec"
+}
+
+variable "zone_name" {
+  type    = string
+  default = "geek-teru.com"
 }
 
 data "aws_caller_identity" "current" {}

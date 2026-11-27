@@ -43,5 +43,5 @@ variable "nat_gateway_subnet_key" {
 }
 
 locals {
-  name_prefix = "${var.service_name}-${var.env}"
+  name_prefix = "${var.env}-${var.service_name}"
 }
