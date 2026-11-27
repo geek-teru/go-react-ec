@@ -36,3 +36,22 @@ module "ecs" {
   env          = var.env
   service_name = var.service_name
 }
+
+# ----------------------------------------
+# ALB
+# ----------------------------------------
+module "alb" {
+  source = "../../modules/alb"
+
+  env          = var.env
+  service_name = var.service_name
+
+  vpc_id            = module.network.vpc_id
+  public_subnet_ids = module.network.public_subnet_ids
+  security_group_id = module.network.alb_security_group_id
+
+  zone_name   = "geek-teru.com"
+  domain_name = "${var.service_name}.geek-teru.com"
+
+  enable_access_log = true
+}

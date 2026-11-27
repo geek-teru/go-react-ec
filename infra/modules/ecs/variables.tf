@@ -7,8 +7,5 @@ variable "service_name" {
 }
 
 locals {
-  name_prefix = "${var.service_name}-${var.env}"
-
-  # ECR・タスクロール・ロググループをこの単位で作る
-  apps = toset(["api", "web"])
+  name_prefix = "${var.env}-${var.service_name}"
 }
